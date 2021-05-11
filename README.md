@@ -1,4 +1,4 @@
-# My Cool Platformer Game 3
+# My Cool PLATFORMER Game 3
 yes it is video game
 
 pnpm install  
