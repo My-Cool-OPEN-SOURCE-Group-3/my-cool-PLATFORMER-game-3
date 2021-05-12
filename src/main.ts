@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { Player } from './entities/Player';
-import { Ground } from './entities/Ground';
+import { Player } from './objects/Player';
+import { Ground } from './objects/Ground';
 
 class GameScene extends Phaser.Scene {
   player?: Player;
