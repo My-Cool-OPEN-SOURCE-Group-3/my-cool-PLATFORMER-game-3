@@ -18,4 +18,13 @@ export class Movement {
     this.body = body;
     Object.assign(this, init);
   }
+
+  public updateFlip(chara: Phaser.Physics.Arcade.Sprite, dir: number): void {
+    if (dir < 0) {
+      chara.flipX = false;
+    } else if (dir > 0) {
+      chara.flipX = true;
+    }
+    chara.body.updateCenter();
+  }
 }
