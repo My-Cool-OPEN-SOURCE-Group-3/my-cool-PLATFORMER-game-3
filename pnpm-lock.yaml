@@ -1,5 +1,6 @@
 dependencies:
   phaser: 3.54.0
+  xstate: 4.19.1
 devDependencies:
   eslint: 7.26.0
   prettier: 2.2.1
@@ -932,6 +933,10 @@ packages:
     dev: true
     resolution:
       integrity: sha1-tSQ9jz7BqjXxNkYFvA0QNuMKtp8=
+  /xstate/4.19.1:
+    dev: false
+    resolution:
+      integrity: sha512-tnBh6ue9MiyoMkE2+w1IqfvJm4nBe3S4Ky/RLvlo9vka8FdO4WyyT3M7PA0pQoM/FZ9aJVWFOlsNw0Nc7E+4Bw==
   /yallist/4.0.0:
     dev: true
     resolution:
@@ -942,3 +947,4 @@ specifiers:
   prettier: ^2.2.1
   typescript: ^4.2.3
   vite: ^2.2.3
+  xstate: ^4.19.1

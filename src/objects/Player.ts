@@ -1,17 +1,14 @@
-import { Movement } from '../components/Movement';
+import { State, StateMachine } from 'xstate';
+import { Direction, Movement } from '../components/Movement';
+import { PlayerContext, PlayerEvent } from '../states/config/PlayerStateConfig';
+import { PlayerStates } from '../states/PlayerStates';
 
 export class Player extends Phaser.GameObjects.Rectangle {
   body!: Phaser.Physics.Arcade.Body;
 
-  private move = new Movement({
-    speed: 300,
-    slip: 0.5,
-    airMomentum: 200,
-    jump_force: 900,
-    isJumping: false,
-  });
-
   private keys: Phaser.Types.Input.Keyboard.CursorKeys;
+  private states: StateMachine<PlayerContext, any, PlayerEvent>;
+  private currentState: State<PlayerContext, PlayerEvent>;
 
   constructor(
     scene: Phaser.Scene,
@@ -19,44 +16,71 @@ export class Player extends Phaser.GameObjects.Rectangle {
     y: number,
     width: number,
     height: number,
-    color: number,
+    color: number
   ) {
     super(scene, x, y, width, height, color);
-    scene.physics.add.existing(this);
+
+    scene.physics.add.existing(this); // sets body
+    this.states = PlayerStates(
+      new Movement(this.body, {
+        speed: 300,
+        slip: 0.2,
+        airMomentum: 200,
+        jumpForce: 900,
+        isJumping: false,
+      })
+    );
+    this.currentState = this.states.initialState;
+
     scene.add.existing(this);
     this.keys = this.scene.input.keyboard.createCursorKeys();
   }
 
   update(_time: number, delta: number): void {
+    // handle moving
+    let dirX = 0;
     if (this.keys.left.isDown) {
-      this.body.setVelocityX(-this.move.speed);
-    } else if (this.keys.right.isDown) {
-      this.body.setVelocityX(this.move.speed);
-    } else {
-      let vx = this.body.velocity.x;
-      if (this.move.isJumping) {
-        this.body.setVelocityX(
-          Math.abs(vx) > 0.01
-            ? this.body.velocity.x / (1 + delta * (1 / this.move.airMomentum))
-            : 0,
-        );
-      } else {
-        this.body.setVelocityX(
-          Math.abs(vx) > 0.01
-            ? this.body.velocity.x / (1 + 1 / (delta * this.move.slip))
-            : 0,
-        );
-      }
+      dirX += Direction.LEFT;
     }
-    if (this.keys.up.isDown && !this.move.isJumping) {
-      this.body.setVelocityY(-this.move.jump_force);
-      this.move.isJumping = true;
-    } else if (this.keys.down.isDown) {
-      this.body.setVelocityY(this.move.speed);
+    if (this.keys.right.isDown) {
+      dirX += Direction.RIGHT;
+    }
+    if (dirX === 0) {
+      this.currentState = this.states.transition(this.currentState, {
+        type: 'STOP',
+        delta,
+      });
+    } else {
+      this.currentState = this.states.transition(this.currentState, {
+        type: 'WALK',
+        direction: dirX,
+      });
+    }
+    if (this.keys.up.isDown) {
+      this.currentState = this.states.transition(this.currentState, {
+        type: 'JUMP',
+      });
+    }
+
+    // handle falling
+    if (this.body.velocity.y > 0 && this.currentState.value !== 'jumping') {
+      this.currentState = this.states.transition(this.currentState, {
+        type: 'FALL',
+      });
+    }
+
+    if (this.currentState.value === 'falling') {
+      this.fillColor = 0xaabbcc;
+    } else if (this.currentState.value === 'jumping') {
+      this.fillColor = 0x00afcc;
+    } else {
+      this.fillColor = 0x002fa7;
     }
   }
 
   public onGroundTouched = (): void => {
-    this.move.isJumping = false;
+    this.currentState = this.states.transition(this.currentState, {
+      type: 'TOUCH_GROUND',
+    });
   };
 }
