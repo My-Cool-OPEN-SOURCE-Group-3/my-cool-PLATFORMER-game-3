@@ -6,11 +6,21 @@ class GameScene extends Phaser.Scene {
   player?: Player;
   ground?: Ground;
 
+  preload(): void {
+    this.load.baseURL = 'assets/';
+    this.load.image('player', 'sprites/ninja_idle_1.png');
+    this.load.atlas(
+      'a-player',
+      'sprites/ninja.png',
+      'sprites/ninja_atlas.json',
+    );
+  }
+
   create(): void {
     var rect = new Phaser.Geom.Rectangle(250, 250, 250, 250);
     var graphics = this.add.graphics({ fillStyle: { color: 0xff69b4 } });
     graphics.fillRectShape(rect);
-    this.player = new Player(this, 50, 100, 50, 50, 0x002fa7);
+    this.player = new Player(this, 50, 100, 'player');
     this.ground = new Ground(this, 512, 512, 1024, 100, 0xeeae11);
     this.physics.add.collider(
       this.player,
