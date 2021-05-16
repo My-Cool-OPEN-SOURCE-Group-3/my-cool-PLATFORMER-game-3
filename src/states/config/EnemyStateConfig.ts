@@ -1,13 +1,14 @@
 import { Movement, Direction } from '../../components/Movement';
+import { EventType } from './States';
 
 export interface EnemyContext {
   move: Movement;
 }
 
 export type EnemyEvent =
-  | { type: 'WALK'; direction: Direction }
-  | { type: 'RUN'; direction: Direction }
-  | { type: 'FALL' }
-  | { type: 'TOUCH_GROUND' }
-  | { type: 'AT_EDGE' }
-  | { type: 'STOP'; delta: number };
+  | { type: EventType.WALK; direction: Direction }
+  | { type: EventType.RUN; direction: Direction }
+  | { type: EventType.JUMP }
+  | { type: EventType.FALL }
+  | { type: EventType.TOUCH_GROUND }
+  | { type: EventType.STOP; delta: number };

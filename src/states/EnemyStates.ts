@@ -4,12 +4,13 @@ import { assign, createMachine } from 'xstate';
 import { choose } from 'xstate/lib/actions';
 import { Movement } from '../components/Movement';
 import { EnemyContext, EnemyEvent } from './config/EnemyStateConfig';
+import { Actions, CharacterState, EventType } from './config/States';
 
 export const EnemyStates = (move: Movement) =>
   createMachine<EnemyContext, EnemyEvent>(
     {
       id: 'player',
-      initial: 'idle',
+      initial: CharacterState.IDLE,
       context: {
         move,
       },
@@ -18,40 +19,40 @@ export const EnemyStates = (move: Movement) =>
           actions: choose([
             {
               cond: 'midair',
-              actions: ['applyDrag'],
+              actions: [Actions.APPLY_DRAG],
             },
             {
-              actions: ['applyFriction'],
+              actions: [Actions.APPLY_FRICTION],
             },
           ]),
         },
         WALK: {
-          actions: ['walk'],
+          actions: [Actions.WALK],
         },
         FALL: {
-          target: 'falling',
+          target: CharacterState.FALLING,
         },
       },
       states: {
         idle: {
           on: {
             WALK: {
-              target: 'walking',
+              target: CharacterState.WALKING,
             },
           },
         },
         walking: {
           on: {
             STOP: {
-              target: 'idle',
+              target: CharacterState.IDLE,
             },
           },
         },
         falling: {
           on: {
             TOUCH_GROUND: {
-              target: 'idle',
-              actions: ['land'],
+              target: CharacterState.IDLE,
+              actions: [Actions.LAND],
             },
           },
         },
@@ -60,13 +61,13 @@ export const EnemyStates = (move: Movement) =>
     {
       guards: {
         midair: (_ctx, _ev, meta) => {
-          return meta.state.value === 'falling';
+          return meta.state.value === CharacterState.FALLING;
         },
       },
       actions: {
         walk: assign<EnemyContext, EnemyEvent>({
           move: (ctx, ev) => {
-            if (ev.type !== 'WALK') {
+            if (ev.type !== EventType.WALK) {
               return ctx.move;
             }
             ctx.move.body.setVelocityX(ctx.move.speed * ev.direction);
@@ -83,7 +84,7 @@ export const EnemyStates = (move: Movement) =>
         }),
         applyFriction: assign<EnemyContext, EnemyEvent>({
           move: (ctx, ev) => {
-            if (ev.type !== 'STOP') {
+            if (ev.type !== EventType.STOP) {
               return ctx.move;
             }
             let mov = ctx.move;
@@ -98,7 +99,7 @@ export const EnemyStates = (move: Movement) =>
         }),
         applyDrag: assign<EnemyContext, EnemyEvent>({
           move: (ctx, ev) => {
-            if (ev.type !== 'STOP') {
+            if (ev.type !== EventType.STOP) {
               return ctx.move;
             }
             let mov = ctx.move;

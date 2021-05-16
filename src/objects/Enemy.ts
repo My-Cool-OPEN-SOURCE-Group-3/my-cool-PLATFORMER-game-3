@@ -1,7 +1,8 @@
 import { State, StateMachine } from 'xstate';
-import { Direction, Movement } from '../components/Movement';
+import { Movement } from '../components/Movement';
 import { EnemyContext, EnemyEvent } from '../states/config/EnemyStateConfig';
 import { EnemyStates } from '../states/EnemyStates';
+import { CharacterState, EventType } from '../states/config/States';
 
 export class Enemy extends Phaser.GameObjects.Rectangle {
   body!: Phaser.Physics.Arcade.Body;
@@ -57,13 +58,13 @@ export class Enemy extends Phaser.GameObjects.Rectangle {
     this.graphics.strokeLineShape(this.edgeRay);
 
     // handle falling
-    if (this.body.velocity.y > 0 && this.currentState.value !== 'jumping') {
+    if (this.body.velocity.y > 0 && this.currentState.value !== CharacterState.JUMPING) {
       this.currentState = this.states.transition(this.currentState, {
-        type: 'FALL',
+        type: EventType.FALL,
       });
     }
 
-    if (this.currentState.value === 'falling') {
+    if (this.currentState.value === CharacterState.FALLING) {
       this.fillColor = 0xccbbaa;
     } else {
       this.fillColor = 0xff1122;
@@ -72,7 +73,7 @@ export class Enemy extends Phaser.GameObjects.Rectangle {
 
   public onGroundTouched = (): void => {
     this.currentState = this.states.transition(this.currentState, {
-      type: 'TOUCH_GROUND',
+      type: EventType.TOUCH_GROUND,
     });
   };
 }

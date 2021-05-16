@@ -4,12 +4,13 @@ import { assign, createMachine } from 'xstate';
 import { choose } from 'xstate/lib/actions';
 import { Movement } from '../components/Movement';
 import { PlayerContext, PlayerEvent } from './config/PlayerStateConfig';
+import { Actions, CharacterState, EventType } from './config/States';
 
 export const PlayerStates = (move: Movement) =>
   createMachine<PlayerContext, PlayerEvent>(
     {
       id: 'player',
-      initial: 'idle',
+      initial: CharacterState.IDLE,
       context: {
         move,
       },
@@ -18,54 +19,54 @@ export const PlayerStates = (move: Movement) =>
           actions: choose([
             {
               cond: 'midair',
-              actions: ['applyDrag'],
+              actions: [Actions.APPLY_DRAG],
             },
             {
-              actions: ['applyFriction'],
+              actions: [Actions.APPLY_FRICTION],
             },
           ]),
         },
         WALK: {
-          actions: ['walk'],
+          actions: [Actions.WALK],
         },
         JUMP: {
-          target: 'jumping',
+          target: CharacterState.JUMPING,
           cond: 'canJump',
         },
         FALL: {
-          target: 'falling',
+          target: CharacterState.FALLING,
         },
       },
       states: {
         idle: {
           on: {
             WALK: {
-              target: 'walking',
+              target: CharacterState.WALKING,
             },
           },
         },
         walking: {
           on: {
             STOP: {
-              target: 'idle',
+              target: CharacterState.IDLE,
             },
           },
         },
         jumping: {
-          entry: ['jump'],
+          entry: [Actions.JUMP],
           on: {
             TOUCH_GROUND: {
-              target: 'idle',
+              target: CharacterState.IDLE,
               cond: 'midair',
-              actions: ['land'],
+              actions: [Actions.LAND],
             },
           },
         },
         falling: {
           on: {
             TOUCH_GROUND: {
-              target: 'idle',
-              actions: ['land'],
+              target: CharacterState.IDLE,
+              actions: [Actions.LAND],
             },
           },
         },
@@ -74,18 +75,18 @@ export const PlayerStates = (move: Movement) =>
     {
       guards: {
         canJump: (_ctx, _ev, meta) => {
-          return meta.state.value !== 'jumping';
+          return meta.state.value !== CharacterState.JUMPING;
         },
         midair: (_ctx, _ev, meta) => {
           return (
-            meta.state.value === 'jumping' || meta.state.value === 'falling'
+            meta.state.value === CharacterState.JUMPING || meta.state.value === CharacterState.FALLING
           );
         },
       },
       actions: {
         walk: assign<PlayerContext, PlayerEvent>({
           move: (ctx, ev) => {
-            if (ev.type !== 'WALK') {
+            if (ev.type !== EventType.WALK) {
               return ctx.move;
             }
             ctx.move.body.setVelocityX(ctx.move.speed * ev.direction);
@@ -111,7 +112,7 @@ export const PlayerStates = (move: Movement) =>
         }),
         applyFriction: assign<PlayerContext, PlayerEvent>({
           move: (ctx, ev) => {
-            if (ev.type !== 'STOP') {
+            if (ev.type !== EventType.STOP) {
               return ctx.move;
             }
             let mov = ctx.move;
@@ -126,7 +127,7 @@ export const PlayerStates = (move: Movement) =>
         }),
         applyDrag: assign<PlayerContext, PlayerEvent>({
           move: (ctx, ev) => {
-            if (ev.type !== 'STOP') {
+            if (ev.type !== EventType.STOP) {
               return ctx.move;
             }
             let mov = ctx.move;

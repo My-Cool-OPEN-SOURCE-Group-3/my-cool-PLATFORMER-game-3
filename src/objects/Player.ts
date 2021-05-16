@@ -2,6 +2,7 @@ import { State, StateMachine } from 'xstate';
 import { Direction, Movement } from '../components/Movement';
 import { PlayerContext, PlayerEvent } from '../states/config/PlayerStateConfig';
 import { PlayerStates } from '../states/PlayerStates';
+import { CharacterState, EventType } from '../states/config/States';
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   body!: Phaser.Physics.Arcade.Body;
@@ -9,7 +10,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private keys: Phaser.Types.Input.Keyboard.CursorKeys;
   private states: StateMachine<PlayerContext, any, PlayerEvent>;
   private currentState: State<PlayerContext, PlayerEvent>;
-  private lastAnim = 'idle';
+  private lastAnim = CharacterState.IDLE;
   private move: Movement;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
@@ -32,7 +33,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private initAnim(): void {
     const sceneAnims = this.scene.anims;
     sceneAnims.create({
-      key: 'idle',
+      key: CharacterState.IDLE,
       frames: sceneAnims.generateFrameNames('a-player', {
         prefix: 'idle_',
         start: 1,
@@ -41,7 +42,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       frameRate: 8,
     });
     sceneAnims.create({
-      key: 'run',
+      key: CharacterState.RUNNING,
       frames: sceneAnims.generateFrameNames('a-player', {
         prefix: 'run_',
         start: 1,
@@ -61,33 +62,33 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
     if (dirX === 0) {
       this.currentState = this.states.transition(this.currentState, {
-        type: 'STOP',
+        type: EventType.STOP,
         delta,
       });
     } else {
       this.currentState = this.states.transition(this.currentState, {
-        type: 'WALK',
+        type: EventType.WALK,
         direction: dirX,
       });
     }
     if (this.keys.up.isDown) {
       this.currentState = this.states.transition(this.currentState, {
-        type: 'JUMP',
+        type: EventType.JUMP,
       });
     }
 
     // handle falling
     if (this.body.velocity.y > 0 && this.currentState.value !== 'jumping') {
       this.currentState = this.states.transition(this.currentState, {
-        type: 'FALL',
+        type: EventType.FALL,
       });
     }
 
     this.move.updateFlip(this, dirX);
-    let anim = 'idle';
+    let anim = CharacterState.IDLE;
     switch (this.currentState.value) {
-      case 'walking':
-        anim = 'run';
+      case CharacterState.WALKING:
+        anim = CharacterState.RUNNING;
         break;
     }
     if (anim !== this.lastAnim || !this.anims.isPlaying) {
@@ -98,7 +99,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   public onGroundTouched = (): void => {
     this.currentState = this.states.transition(this.currentState, {
-      type: 'TOUCH_GROUND',
+      type: EventType.TOUCH_GROUND,
     });
   };
 }
