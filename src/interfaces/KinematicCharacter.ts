@@ -2,7 +2,7 @@ import { Movement } from '../components/Movement';
 
 export interface IKinematicCharacter {
   onGroundTouched: (ground: Phaser.GameObjects.GameObject) => void;
-  onWallTouched?: (time: number) => void;
+  onWallTouched: (wall: Phaser.GameObjects.GameObject) => void;
 }
 
 export interface KinematicCharacterContext {

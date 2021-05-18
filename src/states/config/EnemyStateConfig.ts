@@ -9,4 +9,5 @@ export type EnemyEvent =
   | { type: EventType.AT_EDGE }
   | { type: EventType.FALL }
   | { type: EventType.TOUCH_GROUND }
+  | { type: EventType.TOUCH_WALL }
   | { type: EventType.STOP };

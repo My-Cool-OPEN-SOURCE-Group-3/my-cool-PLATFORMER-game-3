@@ -7,6 +7,7 @@ export enum EventType {
   FALL = 'FALL',
   STOP = 'STOP',
   TOUCH_GROUND = 'TOUCH_GROUND',
+  TOUCH_WALL = 'TOUCH_WALL',
   AT_EDGE = 'AT_EDGE',
 }
 
@@ -17,6 +18,8 @@ export enum CharacterState {
   RUNNING = 'running',
   JUMPING = 'jumping',
   FALLING = 'falling',
+  WALLSLIDING = 'wallsliding',
+  WALLJUMPING = 'walljumping',
 }
 
 export enum Actions {
@@ -26,6 +29,8 @@ export enum Actions {
   LAND = 'land',
   FALL = 'fall',
   TURN = 'turn',
+  WALLSLIDE = 'wallslide',
+  WALLJUMP = 'walljump',
   UPDATE = 'update',
   APPLY_DRAG = 'applyDrag',
   APPLY_FRICTION = 'applyFriction',

@@ -10,4 +10,5 @@ export type PlayerEvent =
   | { type: EventType.JUMP }
   | { type: EventType.FALL }
   | { type: EventType.TOUCH_GROUND }
+  | { type: EventType.TOUCH_WALL }
   | { type: EventType.STOP };

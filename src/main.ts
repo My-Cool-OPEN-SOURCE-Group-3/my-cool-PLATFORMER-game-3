@@ -30,7 +30,7 @@ class GameScene extends Phaser.Scene {
     graphics.fillRectShape(rect);
 
     this.ground = new Ground(this, 512, 512, 1000, 100, 0xeeae11);
-    this.ground2 = new Ground(this, 600, 400, 60, 100, 0xffee33);
+    this.ground2 = new Ground(this, 600, 400, 60, 250, 0xffee33);
     var grounds = this.add.group([this.ground, this.ground2]);
 
     this.player = new Player(this, 50, 100, 'player');
@@ -46,10 +46,14 @@ class GameScene extends Phaser.Scene {
           obj.onGroundTouched(this.ground);
         }
       }
+      if (obj.body.touching.left || obj.body.touching.right) {
+        if (isKinematicCharacter(obj)) {
+          obj.onWallTouched(this.ground);
+        }
+      }
     });
     this.physics.add.overlap(characters, this.ground2, (obj1, obj2) => {
       if (isKinematicCharacter(obj1)) {
-        // obj1.onOverlap(this.time.now);
         fixOverlap(obj1, obj2);
       }
     });

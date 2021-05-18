@@ -107,4 +107,11 @@ export class Enemy
       type: EventType.TOUCH_GROUND,
     });
   };
+
+  public onWallTouched = (wall: Phaser.GameObjects.GameObject): void => {
+    this.addObstacle(wall);
+    this.interpreter.send({
+      type: EventType.TOUCH_WALL,
+    });
+  };
 }

@@ -90,6 +90,11 @@ export class Player
       });
     }
 
+    // handle moving in midair because doing this in the state machine sucks
+    if (this.currentState.value !== CharacterState.WALLJUMPING) {
+      this.body.setVelocityX(this.move.speed * dirX);
+    }
+
     // handle falling
     if (
       this.body.velocity.y > 0 &&
@@ -99,6 +104,8 @@ export class Player
         type: EventType.FALL,
       });
     }
+
+    //console.log(this.currentState.value);
 
     // update state machine
     this.currentState = this.states.transition(this.currentState, {
@@ -114,7 +121,9 @@ export class Player
     });
   };
 
-  public onWallTouched = (_time: number): void => {
-    this.move.isTouchingWall = true;
+  public onWallTouched = (): void => {
+    this.currentState = this.states.transition(this.currentState, {
+      type: EventType.TOUCH_WALL,
+    });
   };
 }
