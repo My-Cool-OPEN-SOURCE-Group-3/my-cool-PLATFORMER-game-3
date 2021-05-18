@@ -94,8 +94,6 @@ export class Enemy
 
   public addObstacle = (obj: Phaser.GameObjects.GameObject): void => {
     if (!this.obstacles.includes(obj)) {
-      console.log('adding', obj);
-
       let rect = new Phaser.Geom.Rectangle();
       Phaser.Display.Bounds.GetBounds(obj, rect);
       this.obstacles.push(obj);

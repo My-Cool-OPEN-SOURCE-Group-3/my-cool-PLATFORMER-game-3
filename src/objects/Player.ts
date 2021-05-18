@@ -54,15 +54,6 @@ export class Player
   }
 
   update(_: number, delta: number): void {
-    /* TODO: see if below block is ever needed
-    if (
-      Math.abs(this.move.lastOverlapTime - time) >
-      Movement.OVERLAP_TIME_THRESHOLD
-    ) {
-      this.move.isTouchingWall = false;
-      this.move.isOverlapping = false;
-    } */
-
     // handle animation
     this.move.updateFlip(this);
     let anim = CharacterState.IDLE;
@@ -100,7 +91,10 @@ export class Player
     }
 
     // handle falling
-    if (this.body.velocity.y > 0 && this.currentState.value !== 'jumping') {
+    if (
+      this.body.velocity.y > 0 &&
+      this.currentState.value !== CharacterState.JUMPING
+    ) {
       this.currentState = this.states.transition(this.currentState, {
         type: EventType.FALL,
       });
@@ -123,9 +117,4 @@ export class Player
   public onWallTouched = (_time: number): void => {
     this.move.isTouchingWall = true;
   };
-
-  /*public onOverlap = (time: number): void => {
-    this.move.isOverlapping = true;
-    this.move.lastOverlapTime = time;
-  };*/
 }

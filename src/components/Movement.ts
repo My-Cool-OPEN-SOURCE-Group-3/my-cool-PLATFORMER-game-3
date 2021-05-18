@@ -15,11 +15,9 @@ export class Movement {
   jumpForce = 900;
   coyoteTime = 100; // extra time in ms after leaving an edge to make a jump
 
-  //isOverlapping = false;
   isTouchingWall = false;
 
   midairTime = 0;
-  //lastOverlapTime = 0;
 
   constructor(body: Phaser.Physics.Arcade.Body, init?: Partial<Movement>) {
     this.body = body;

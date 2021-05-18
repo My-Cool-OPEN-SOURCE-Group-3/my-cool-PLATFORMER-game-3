@@ -37,6 +37,9 @@ class GameScene extends Phaser.Scene {
     this.enemy = new Enemy(this, 700, 100, 40, 80, 0xff1122);
     var characters = this.add.group([this.player, this.enemy]);
 
+    this.cameras.main.setBounds(-480, 0, 1920, 768);
+    this.cameras.main.startFollow(this.player, true, 0.07, 0.07);
+
     this.physics.add.collider(characters, grounds, (obj, grnd) => {
       if (obj.body.touching.down && grnd.body.touching.up) {
         if (isKinematicCharacter(obj)) {
