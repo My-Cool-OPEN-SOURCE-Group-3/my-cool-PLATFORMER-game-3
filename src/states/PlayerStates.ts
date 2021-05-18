@@ -12,13 +12,17 @@ export const PlayerStates = (move: Movement) =>
       initial: 'idle',
       context: {
         move,
+        delta: 0,
       },
       on: {
+        UPDATE: {
+          actions: ['update'],
+        },
         STOP: {
           actions: choose([
             {
-              cond: 'midair',
               actions: ['applyDrag'],
+              cond: 'midair',
             },
             {
               actions: ['applyFriction'],
@@ -28,12 +32,9 @@ export const PlayerStates = (move: Movement) =>
         WALK: {
           actions: ['walk'],
         },
-        JUMP: {
-          target: 'jumping',
-          cond: 'canJump',
-        },
         FALL: {
           target: 'falling',
+          actions: ['fall'],
         },
       },
       states: {
@@ -42,12 +43,18 @@ export const PlayerStates = (move: Movement) =>
             WALK: {
               target: 'walking',
             },
+            JUMP: {
+              target: 'jumping',
+            },
           },
         },
         walking: {
           on: {
             STOP: {
               target: 'idle',
+            },
+            JUMP: {
+              target: 'jumping',
             },
           },
         },
@@ -56,7 +63,6 @@ export const PlayerStates = (move: Movement) =>
           on: {
             TOUCH_GROUND: {
               target: 'idle',
-              cond: 'midair',
               actions: ['land'],
             },
           },
@@ -67,75 +73,77 @@ export const PlayerStates = (move: Movement) =>
               target: 'idle',
               actions: ['land'],
             },
+            JUMP: {
+              target: 'jumping',
+              cond: 'canJump',
+            },
           },
         },
       },
     },
     {
       guards: {
-        canJump: (_ctx, _ev, meta) => {
-          return meta.state.value !== 'jumping';
-        },
-        midair: (_ctx, _ev, meta) => {
-          return (
-            meta.state.value === 'jumping' || meta.state.value === 'falling'
-          );
-        },
+        canJump: (ctx, _) => ctx.move.midairTime < ctx.move.coyoteTime,
+        midair: (_, _ev, meta) =>
+          meta.state.value === 'jumping' || meta.state.value === 'falling',
       },
       actions: {
+        update: assign<PlayerContext, PlayerEvent>({
+          delta: (_, ev) => (ev.type === 'UPDATE' ? ev.delta ?? 0 : 0),
+          move: (ctx, ev) => {
+            ctx.move.directionX = ev.type === 'UPDATE' ? ev.directionX ?? 0 : 0;
+            return ctx.move;
+          },
+        }),
         walk: assign<PlayerContext, PlayerEvent>({
           move: (ctx, ev) => {
             if (ev.type !== 'WALK') {
               return ctx.move;
             }
-            ctx.move.body.setVelocityX(ctx.move.speed * ev.direction);
+            ctx.move.body.setVelocityX(ctx.move.speed * ctx.move.directionX);
             return ctx.move;
           },
         }),
         jump: assign<PlayerContext, PlayerEvent>({
           move: (ctx, _) => {
             ctx.move.body.setVelocityY(-ctx.move.jumpForce);
-            ctx.move.isMidair = true;
-            ctx.move.isJumping = true;
             return ctx.move;
           },
         }),
         land: assign<PlayerContext, PlayerEvent>({
           move: (ctx, _) => {
-            if (ctx.move.isJumping || ctx.move.isMidair) {
-              ctx.move.isMidair = false;
-              ctx.move.isJumping = false;
-            }
+            ctx.move.midairTime = 0;
+            return ctx.move;
+          },
+        }),
+        fall: assign<PlayerContext, PlayerEvent>({
+          move: (ctx, _) => {
+            ctx.move.midairTime += ctx.delta;
             return ctx.move;
           },
         }),
         applyFriction: assign<PlayerContext, PlayerEvent>({
-          move: (ctx, ev) => {
-            if (ev.type !== 'STOP') {
-              return ctx.move;
-            }
+          move: (ctx, _) => {
             let mov = ctx.move;
             let vx = mov.body.velocity.x;
             mov.body.setVelocityX(
-              Math.abs(vx) > 0.01
-                ? mov.body.velocity.x / (1 + 1 / (ev.delta * mov.slip))
-                : 0
+              Math.abs(vx) > 0.01 ? vx / (1 + 1 / (ctx.delta * mov.slip)) : 0
             );
+            if (mov.isTouchingWall) mov.body.setVelocityX(0);
             return ctx.move;
           },
         }),
         applyDrag: assign<PlayerContext, PlayerEvent>({
-          move: (ctx, ev) => {
-            if (ev.type !== 'STOP') {
-              return ctx.move;
-            }
+          move: (ctx, _) => {
             let mov = ctx.move;
             let vx = mov.body.velocity.x;
             mov.body.setVelocityX(
               Math.abs(vx) > 0.01
-                ? mov.body.velocity.x / (1 + ev.delta * (1 / mov.airMomentum))
+                ? vx / (1 + ctx.delta * (1 / mov.airMomentum))
                 : 0
             );
+            // TODO: see if below line is ever needed
+            // if (mov.isTouchingWall) mov.body.setVelocityX(0);
             return ctx.move;
           },
         }),

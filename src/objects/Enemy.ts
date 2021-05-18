@@ -1,15 +1,21 @@
-import { State, StateMachine } from 'xstate';
-import { Direction, Movement } from '../components/Movement';
+import { interpret, Interpreter, State, StateMachine } from 'xstate';
+import { Movement } from '../components/Movement';
+import { IKinematicCharacter } from '../interfaces/KinematicCharacter';
 import { EnemyContext, EnemyEvent } from '../states/config/EnemyStateConfig';
 import { EnemyStates } from '../states/EnemyStates';
+import { PhaserRB } from '../util';
 
-export class Enemy extends Phaser.GameObjects.Rectangle {
+export class Enemy
+  extends Phaser.GameObjects.Rectangle
+  implements IKinematicCharacter {
   body!: Phaser.Physics.Arcade.Body;
   edgeRay: Phaser.Geom.Line;
 
-  private states: StateMachine<EnemyContext, any, EnemyEvent>;
-  private currentState: State<EnemyContext, EnemyEvent>;
+  private interpreter: Interpreter<EnemyContext, any, EnemyEvent>;
   private graphics: Phaser.GameObjects.Graphics;
+  private move: Movement;
+  private obstacles: Phaser.GameObjects.GameObject[];
+  private obstacleIndex: PhaserRB;
 
   constructor(
     scene: Phaser.Scene,
@@ -21,15 +27,13 @@ export class Enemy extends Phaser.GameObjects.Rectangle {
   ) {
     super(scene, x, y, width, height, color);
     scene.physics.add.existing(this);
-    this.states = EnemyStates(
-      new Movement(this.body, {
-        speed: 150,
-        slip: 0.1,
-        airMomentum: 150,
-      })
-    );
-    this.currentState = this.states.initialState;
-    console.log(x, y, width, height);
+    this.move = new Movement(this.body, {
+      speed: 150,
+      slip: 0.1,
+      airMomentum: 150,
+    });
+    this.interpreter = interpret(EnemyStates(this.move));
+    this.interpreter.start();
     this.edgeRay = new Phaser.Geom.Line(
       x + width / 2,
       y - height / 2,
@@ -41,37 +45,66 @@ export class Enemy extends Phaser.GameObjects.Rectangle {
     this.graphics = scene.add.graphics();
     this.graphics.strokeLineShape(this.edgeRay);
     this.graphics.lineStyle(2, 0x00ff00);
-    console.log(this.edgeRay);
+    this.obstacles = [];
+    this.obstacleIndex = new PhaserRB();
   }
 
-  update(_time: number, delta: number): void {
+  update(): void {
     // update and draw edge detection ray
     this.edgeRay.setTo(
-      this.x + this.width / 2,
+      this.x + (this.width / 2) * this.move.directionX,
       this.y - this.height / 2,
-      this.x + this.width / 2,
+      this.x + (this.width / 2) * this.move.directionX,
       this.y + this.height / 1.5
     );
     this.graphics.clear();
     this.graphics.lineStyle(2, 0x00ff00);
     this.graphics.strokeLineShape(this.edgeRay);
 
-    // handle falling
-    if (this.body.velocity.y > 0 && this.currentState.value !== 'jumping') {
-      this.currentState = this.states.transition(this.currentState, {
+    // handle edge detection ray leaving edge
+    if (
+      !this.obstacleIndex.collides({
+        minX: this.edgeRay.x1,
+        minY: this.edgeRay.y1,
+        maxX: this.edgeRay.x2,
+        maxY: this.edgeRay.y2,
+      })
+    ) {
+      this.interpreter.send({
+        type: 'AT_EDGE',
+      });
+    }
+    if (
+      this.body.velocity.y > 0 &&
+      this.interpreter.state.value !== 'jumping'
+    ) {
+      // handle falling
+      this.interpreter.send({
         type: 'FALL',
       });
     }
 
-    if (this.currentState.value === 'falling') {
+    if (this.interpreter.state.value === 'falling') {
       this.fillColor = 0xccbbaa;
     } else {
       this.fillColor = 0xff1122;
     }
   }
 
-  public onGroundTouched = (): void => {
-    this.currentState = this.states.transition(this.currentState, {
+  public addObstacle = (obj: Phaser.GameObjects.GameObject): void => {
+    if (!this.obstacles.includes(obj)) {
+      console.log('adding', obj);
+
+      let rect = new Phaser.Geom.Rectangle();
+      Phaser.Display.Bounds.GetBounds(obj, rect);
+      this.obstacles.push(obj);
+      this.obstacleIndex.insert(rect);
+    }
+  };
+
+  public onGroundTouched = (ground: Phaser.GameObjects.GameObject): void => {
+    this.addObstacle(ground);
+    this.interpreter.send({
       type: 'TOUCH_GROUND',
     });
   };

@@ -1,5 +1,3 @@
-// TODO: consider if it's worth capturing gravity in this
-
 import { assign, createMachine } from 'xstate';
 import { choose } from 'xstate/lib/actions';
 import { Movement } from '../components/Movement';
@@ -8,12 +6,16 @@ import { EnemyContext, EnemyEvent } from './config/EnemyStateConfig';
 export const EnemyStates = (move: Movement) =>
   createMachine<EnemyContext, EnemyEvent>(
     {
-      id: 'player',
+      id: 'enemy',
       initial: 'idle',
       context: {
         move,
+        delta: 0,
       },
       on: {
+        UPDATE: {
+          actions: ['update'],
+        },
         STOP: {
           actions: choose([
             {
@@ -25,9 +27,6 @@ export const EnemyStates = (move: Movement) =>
             },
           ]),
         },
-        WALK: {
-          actions: ['walk'],
-        },
         FALL: {
           target: 'falling',
         },
@@ -35,49 +34,79 @@ export const EnemyStates = (move: Movement) =>
       states: {
         idle: {
           on: {
-            WALK: {
-              target: 'walking',
+            ROAM: {
+              target: 'roaming',
             },
           },
+          activities: ['stop'],
+          after: {
+            IDLE_TIME: { target: 'roaming' },
+          },
         },
-        walking: {
+        roaming: {
+          entry: ['turn'],
           on: {
             STOP: {
               target: 'idle',
             },
+            AT_EDGE: {
+              target: 'idle',
+            },
+          },
+          activities: ['roam'],
+          after: {
+            ROAM_TIME: { target: 'idle' },
           },
         },
         falling: {
           on: {
             TOUCH_GROUND: {
               target: 'idle',
-              actions: ['land'],
             },
           },
         },
       },
     },
     {
+      delays: {
+        IDLE_TIME: 1000,
+        ROAM_TIME: 3000,
+      },
       guards: {
         midair: (_ctx, _ev, meta) => {
           return meta.state.value === 'falling';
         },
       },
+      activities: {
+        roam: (ctx, _ev) => {
+          const interval = setInterval(() => {
+            ctx.move.body.setVelocityX(ctx.move.speed * ctx.move.directionX);
+          });
+          return () => clearInterval(interval);
+        },
+        stop: (ctx, _ev) => {
+          const interval = setInterval(() => {
+            let mov = ctx.move;
+            let vx = mov.body.velocity.x;
+            mov.body.setVelocityX(
+              Math.abs(vx) > 0.01
+                ? mov.body.velocity.x / (1 + 1 / (ctx.delta * mov.slip))
+                : 0
+            );
+          });
+          return () => clearInterval(interval);
+        },
+      },
       actions: {
-        walk: assign<EnemyContext, EnemyEvent>({
-          move: (ctx, ev) => {
-            if (ev.type !== 'WALK') {
-              return ctx.move;
-            }
-            ctx.move.body.setVelocityX(ctx.move.speed * ev.direction);
+        halt: assign<EnemyContext, EnemyEvent>({
+          move: (ctx, _ev) => {
+            ctx.move.body.setVelocityX(0);
             return ctx.move;
           },
         }),
-        land: assign<EnemyContext, EnemyEvent>({
-          move: (ctx, _) => {
-            if (ctx.move.isMidair) {
-              ctx.move.isMidair = false;
-            }
+        turn: assign<EnemyContext, EnemyEvent>({
+          move: (ctx, _ev) => {
+            ctx.move.directionX *= -1;
             return ctx.move;
           },
         }),
@@ -90,7 +119,7 @@ export const EnemyStates = (move: Movement) =>
             let vx = mov.body.velocity.x;
             mov.body.setVelocityX(
               Math.abs(vx) > 0.01
-                ? mov.body.velocity.x / (1 + 1 / (ev.delta * mov.slip))
+                ? mov.body.velocity.x / (1 + 1 / (ctx.delta * mov.slip))
                 : 0
             );
             return ctx.move;
@@ -105,9 +134,15 @@ export const EnemyStates = (move: Movement) =>
             let vx = mov.body.velocity.x;
             mov.body.setVelocityX(
               Math.abs(vx) > 0.01
-                ? mov.body.velocity.x / (1 + ev.delta * (1 / mov.airMomentum))
+                ? mov.body.velocity.x / (1 + ctx.delta * (1 / mov.airMomentum))
                 : 0
             );
+            return ctx.move;
+          },
+        }),
+        update: assign<EnemyContext, EnemyEvent>({
+          move: (ctx, ev) => {
+            ctx.move.directionX = ev.type === 'UPDATE' ? ev.directionX ?? 0 : 0;
             return ctx.move;
           },
         }),

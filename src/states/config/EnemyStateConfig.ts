@@ -1,13 +1,11 @@
-import { Movement, Direction } from '../../components/Movement';
+import { KinematicCharacterContext } from '../../interfaces/KinematicCharacter';
 
-export interface EnemyContext {
-  move: Movement;
-}
+export interface EnemyContext extends KinematicCharacterContext {}
 
 export type EnemyEvent =
-  | { type: 'WALK'; direction: Direction }
-  | { type: 'RUN'; direction: Direction }
+  | { type: 'UPDATE'; delta?: number; directionX?: number }
+  | { type: 'ROAM' }
   | { type: 'FALL' }
   | { type: 'TOUCH_GROUND' }
   | { type: 'AT_EDGE' }
-  | { type: 'STOP'; delta: number };
+  | { type: 'STOP' };

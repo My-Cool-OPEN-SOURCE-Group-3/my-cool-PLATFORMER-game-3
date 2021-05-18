@@ -1,13 +1,12 @@
-import { Movement, Direction } from '../../components/Movement';
+import { KinematicCharacterContext } from '../../interfaces/KinematicCharacter';
 
-export interface PlayerContext {
-  move: Movement;
-}
+export interface PlayerContext extends KinematicCharacterContext {}
 
 export type PlayerEvent =
-  | { type: 'WALK'; direction: Direction }
-  | { type: 'RUN'; direction: Direction }
+  | { type: 'UPDATE'; delta?: number; directionX?: number }
+  | { type: 'WALK' }
+  | { type: 'RUN' }
   | { type: 'JUMP' }
   | { type: 'FALL' }
   | { type: 'TOUCH_GROUND' }
-  | { type: 'STOP'; delta: number };
+  | { type: 'STOP' };

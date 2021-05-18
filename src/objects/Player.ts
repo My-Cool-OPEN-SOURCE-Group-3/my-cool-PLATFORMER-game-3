@@ -1,9 +1,12 @@
 import { State, StateMachine } from 'xstate';
 import { Direction, Movement } from '../components/Movement';
+import { IKinematicCharacter } from '../interfaces/KinematicCharacter';
 import { PlayerContext, PlayerEvent } from '../states/config/PlayerStateConfig';
 import { PlayerStates } from '../states/PlayerStates';
 
-export class Player extends Phaser.Physics.Arcade.Sprite {
+export class Player
+  extends Phaser.Physics.Arcade.Sprite
+  implements IKinematicCharacter {
   body!: Phaser.Physics.Arcade.Body;
 
   private keys: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -20,7 +23,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       slip: 0.2,
       airMomentum: 200,
       jumpForce: 900,
-      isJumping: false,
     });
     this.states = PlayerStates(this.move);
     this.currentState = this.states.initialState;
@@ -50,7 +52,29 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
-  update(_time: number, delta: number): void {
+  update(_: number, delta: number): void {
+    /* TODO: see if below block is ever needed
+    if (
+      Math.abs(this.move.lastOverlapTime - time) >
+      Movement.OVERLAP_TIME_THRESHOLD
+    ) {
+      this.move.isTouchingWall = false;
+      this.move.isOverlapping = false;
+    } */
+
+    // handle animation
+    this.move.updateFlip(this);
+    let anim = 'idle';
+    switch (this.currentState.value) {
+      case 'walking':
+        anim = 'run';
+        break;
+    }
+    if (anim !== this.lastAnim || !this.anims.isPlaying) {
+      this.anims.play(anim);
+    }
+    this.lastAnim = anim;
+
     // handle moving
     let dirX = 0;
     if (this.keys.left.isDown) {
@@ -62,12 +86,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (dirX === 0) {
       this.currentState = this.states.transition(this.currentState, {
         type: 'STOP',
-        delta,
       });
     } else {
       this.currentState = this.states.transition(this.currentState, {
         type: 'WALK',
-        direction: dirX,
       });
     }
     if (this.keys.up.isDown) {
@@ -83,17 +105,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       });
     }
 
-    this.move.updateFlip(this, dirX);
-    let anim = 'idle';
-    switch (this.currentState.value) {
-      case 'walking':
-        anim = 'run';
-        break;
-    }
-    if (anim !== this.lastAnim || !this.anims.isPlaying) {
-      this.anims.play(anim);
-    }
-    this.lastAnim = anim;
+    // update state machine
+    this.currentState = this.states.transition(this.currentState, {
+      type: 'UPDATE',
+      delta,
+      directionX: dirX,
+    });
   }
 
   public onGroundTouched = (): void => {
@@ -101,4 +118,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       type: 'TOUCH_GROUND',
     });
   };
+
+  public onWallTouched = (time: number): void => {
+    this.move.isTouchingWall = true;
+  };
+
+  /*public onOverlap = (time: number): void => {
+    this.move.isOverlapping = true;
+    this.move.lastOverlapTime = time;
+  };*/
 }
