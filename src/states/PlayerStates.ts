@@ -4,77 +4,78 @@ import { assign, createMachine } from 'xstate';
 import { choose } from 'xstate/lib/actions';
 import { Movement } from '../components/Movement';
 import { PlayerContext, PlayerEvent } from './config/PlayerStateConfig';
+import { Actions, CharacterState, EventType } from './config/States';
 
 export const PlayerStates = (move: Movement) =>
   createMachine<PlayerContext, PlayerEvent>(
     {
       id: 'player',
-      initial: 'idle',
+      initial: CharacterState.IDLE,
       context: {
         move,
         delta: 0,
       },
       on: {
         UPDATE: {
-          actions: ['update'],
+          actions: [Actions.UPDATE],
         },
         STOP: {
           actions: choose([
             {
-              actions: ['applyDrag'],
+              actions: [Actions.APPLY_DRAG],
               cond: 'midair',
             },
             {
-              actions: ['applyFriction'],
+              actions: [Actions.APPLY_FRICTION],
             },
           ]),
         },
         WALK: {
-          actions: ['walk'],
+          actions: [Actions.WALK],
         },
         FALL: {
-          target: 'falling',
-          actions: ['fall'],
+          target: CharacterState.FALLING,
+          actions: [Actions.FALL],
         },
       },
       states: {
         idle: {
           on: {
             WALK: {
-              target: 'walking',
+              target: CharacterState.WALKING,
             },
             JUMP: {
-              target: 'jumping',
+              target: CharacterState.JUMPING,
             },
           },
         },
         walking: {
           on: {
             STOP: {
-              target: 'idle',
+              target: CharacterState.IDLE,
             },
             JUMP: {
-              target: 'jumping',
+              target: CharacterState.JUMPING,
             },
           },
         },
         jumping: {
-          entry: ['jump'],
+          entry: [Actions.JUMP],
           on: {
             TOUCH_GROUND: {
-              target: 'idle',
-              actions: ['land'],
+              target: CharacterState.IDLE,
+              actions: [Actions.LAND],
             },
           },
         },
         falling: {
           on: {
             TOUCH_GROUND: {
-              target: 'idle',
-              actions: ['land'],
+              target: CharacterState.IDLE,
+              actions: [Actions.LAND],
             },
             JUMP: {
-              target: 'jumping',
+              target: CharacterState.JUMPING,
               cond: 'canJump',
             },
           },
@@ -85,19 +86,21 @@ export const PlayerStates = (move: Movement) =>
       guards: {
         canJump: (ctx, _) => ctx.move.midairTime < ctx.move.coyoteTime,
         midair: (_, _ev, meta) =>
-          meta.state.value === 'jumping' || meta.state.value === 'falling',
+          meta.state.value === CharacterState.JUMPING ||
+          meta.state.value === CharacterState.FALLING,
       },
       actions: {
         update: assign<PlayerContext, PlayerEvent>({
-          delta: (_, ev) => (ev.type === 'UPDATE' ? ev.delta ?? 0 : 0),
+          delta: (_, ev) => (ev.type === EventType.UPDATE ? ev.delta ?? 0 : 0),
           move: (ctx, ev) => {
-            ctx.move.directionX = ev.type === 'UPDATE' ? ev.directionX ?? 0 : 0;
+            ctx.move.directionX =
+              ev.type === EventType.UPDATE ? ev.directionX ?? 0 : 0;
             return ctx.move;
           },
         }),
         walk: assign<PlayerContext, PlayerEvent>({
           move: (ctx, ev) => {
-            if (ev.type !== 'WALK') {
+            if (ev.type !== EventType.WALK) {
               return ctx.move;
             }
             ctx.move.body.setVelocityX(ctx.move.speed * ctx.move.directionX);

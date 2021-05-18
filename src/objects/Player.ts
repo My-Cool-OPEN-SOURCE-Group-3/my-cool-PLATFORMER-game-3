@@ -3,6 +3,7 @@ import { Direction, Movement } from '../components/Movement';
 import { IKinematicCharacter } from '../interfaces/KinematicCharacter';
 import { PlayerContext, PlayerEvent } from '../states/config/PlayerStateConfig';
 import { PlayerStates } from '../states/PlayerStates';
+import { CharacterState, EventType } from '../states/config/States';
 
 export class Player
   extends Phaser.Physics.Arcade.Sprite
@@ -12,7 +13,7 @@ export class Player
   private keys: Phaser.Types.Input.Keyboard.CursorKeys;
   private states: StateMachine<PlayerContext, any, PlayerEvent>;
   private currentState: State<PlayerContext, PlayerEvent>;
-  private lastAnim = 'idle';
+  private lastAnim = CharacterState.IDLE;
   private move: Movement;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
@@ -34,7 +35,7 @@ export class Player
   private initAnim(): void {
     const sceneAnims = this.scene.anims;
     sceneAnims.create({
-      key: 'idle',
+      key: CharacterState.IDLE,
       frames: sceneAnims.generateFrameNames('a-player', {
         prefix: 'idle_',
         start: 1,
@@ -43,7 +44,7 @@ export class Player
       frameRate: 8,
     });
     sceneAnims.create({
-      key: 'run',
+      key: CharacterState.RUNNING,
       frames: sceneAnims.generateFrameNames('a-player', {
         prefix: 'run_',
         start: 1,
@@ -64,10 +65,10 @@ export class Player
 
     // handle animation
     this.move.updateFlip(this);
-    let anim = 'idle';
+    let anim = CharacterState.IDLE;
     switch (this.currentState.value) {
-      case 'walking':
-        anim = 'run';
+      case CharacterState.WALKING:
+        anim = CharacterState.RUNNING;
         break;
     }
     if (anim !== this.lastAnim || !this.anims.isPlaying) {
@@ -85,29 +86,29 @@ export class Player
     }
     if (dirX === 0) {
       this.currentState = this.states.transition(this.currentState, {
-        type: 'STOP',
+        type: EventType.STOP,
       });
     } else {
       this.currentState = this.states.transition(this.currentState, {
-        type: 'WALK',
+        type: EventType.WALK,
       });
     }
     if (this.keys.up.isDown) {
       this.currentState = this.states.transition(this.currentState, {
-        type: 'JUMP',
+        type: EventType.JUMP,
       });
     }
 
     // handle falling
     if (this.body.velocity.y > 0 && this.currentState.value !== 'jumping') {
       this.currentState = this.states.transition(this.currentState, {
-        type: 'FALL',
+        type: EventType.FALL,
       });
     }
 
     // update state machine
     this.currentState = this.states.transition(this.currentState, {
-      type: 'UPDATE',
+      type: EventType.UPDATE,
       delta,
       directionX: dirX,
     });
@@ -115,11 +116,11 @@ export class Player
 
   public onGroundTouched = (): void => {
     this.currentState = this.states.transition(this.currentState, {
-      type: 'TOUCH_GROUND',
+      type: EventType.TOUCH_GROUND,
     });
   };
 
-  public onWallTouched = (time: number): void => {
+  public onWallTouched = (_time: number): void => {
     this.move.isTouchingWall = true;
   };
 

@@ -1,8 +1,9 @@
-import { interpret, Interpreter, State, StateMachine } from 'xstate';
+import { interpret, Interpreter } from 'xstate';
 import { Movement } from '../components/Movement';
 import { IKinematicCharacter } from '../interfaces/KinematicCharacter';
 import { EnemyContext, EnemyEvent } from '../states/config/EnemyStateConfig';
 import { EnemyStates } from '../states/EnemyStates';
+import { CharacterState, EventType } from '../states/config/States';
 import { PhaserRB } from '../util';
 
 export class Enemy
@@ -80,11 +81,11 @@ export class Enemy
     ) {
       // handle falling
       this.interpreter.send({
-        type: 'FALL',
+        type: EventType.FALL,
       });
     }
 
-    if (this.interpreter.state.value === 'falling') {
+    if (this.interpreter.state.value === CharacterState.FALLING) {
       this.fillColor = 0xccbbaa;
     } else {
       this.fillColor = 0xff1122;
@@ -105,7 +106,7 @@ export class Enemy
   public onGroundTouched = (ground: Phaser.GameObjects.GameObject): void => {
     this.addObstacle(ground);
     this.interpreter.send({
-      type: 'TOUCH_GROUND',
+      type: EventType.TOUCH_GROUND,
     });
   };
 }

@@ -2,66 +2,72 @@ import { assign, createMachine } from 'xstate';
 import { choose } from 'xstate/lib/actions';
 import { Movement } from '../components/Movement';
 import { EnemyContext, EnemyEvent } from './config/EnemyStateConfig';
+import {
+  Actions,
+  Activities,
+  CharacterState,
+  EventType,
+} from './config/States';
 
 export const EnemyStates = (move: Movement) =>
   createMachine<EnemyContext, EnemyEvent>(
     {
       id: 'enemy',
-      initial: 'idle',
+      initial: CharacterState.IDLE,
       context: {
         move,
         delta: 0,
       },
       on: {
         UPDATE: {
-          actions: ['update'],
+          actions: [Actions.UPDATE],
         },
         STOP: {
           actions: choose([
             {
               cond: 'midair',
-              actions: ['applyDrag'],
+              actions: [Actions.APPLY_DRAG],
             },
             {
-              actions: ['applyFriction'],
+              actions: [Actions.APPLY_FRICTION],
             },
           ]),
         },
         FALL: {
-          target: 'falling',
+          target: CharacterState.FALLING,
         },
       },
       states: {
         idle: {
           on: {
             ROAM: {
-              target: 'roaming',
+              target: CharacterState.ROAMING,
             },
           },
-          activities: ['stop'],
+          activities: [Activities.STOP],
           after: {
-            IDLE_TIME: { target: 'roaming' },
+            IDLE_TIME: { target: CharacterState.ROAMING },
           },
         },
         roaming: {
-          entry: ['turn'],
+          entry: [Actions.TURN],
           on: {
             STOP: {
-              target: 'idle',
+              target: CharacterState.IDLE,
             },
             AT_EDGE: {
-              target: 'idle',
+              target: CharacterState.IDLE,
             },
           },
-          activities: ['roam'],
+          activities: [Activities.ROAM],
           after: {
-            ROAM_TIME: { target: 'idle' },
+            ROAM_TIME: { target: CharacterState.IDLE },
           },
         },
         falling: {
           on: {
             TOUCH_GROUND: {
-              target: 'idle',
+              target: CharacterState.IDLE,
             },
           },
         },
@@ -74,7 +80,7 @@ export const EnemyStates = (move: Movement) =>
       },
       guards: {
         midair: (_ctx, _ev, meta) => {
-          return meta.state.value === 'falling';
+          return meta.state.value === CharacterState.FALLING;
         },
       },
       activities: {
@@ -112,7 +118,7 @@ export const EnemyStates = (move: Movement) =>
         }),
         applyFriction: assign<EnemyContext, EnemyEvent>({
           move: (ctx, ev) => {
-            if (ev.type !== 'STOP') {
+            if (ev.type !== EventType.STOP) {
               return ctx.move;
             }
             let mov = ctx.move;
@@ -127,7 +133,7 @@ export const EnemyStates = (move: Movement) =>
         }),
         applyDrag: assign<EnemyContext, EnemyEvent>({
           move: (ctx, ev) => {
-            if (ev.type !== 'STOP') {
+            if (ev.type !== EventType.STOP) {
               return ctx.move;
             }
             let mov = ctx.move;
@@ -142,7 +148,8 @@ export const EnemyStates = (move: Movement) =>
         }),
         update: assign<EnemyContext, EnemyEvent>({
           move: (ctx, ev) => {
-            ctx.move.directionX = ev.type === 'UPDATE' ? ev.directionX ?? 0 : 0;
+            ctx.move.directionX =
+              ev.type === EventType.UPDATE ? ev.directionX ?? 0 : 0;
             return ctx.move;
           },
         }),

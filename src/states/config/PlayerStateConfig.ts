@@ -1,12 +1,13 @@
 import { KinematicCharacterContext } from '../../interfaces/KinematicCharacter';
+import { EventType } from './States';
 
 export interface PlayerContext extends KinematicCharacterContext {}
 
 export type PlayerEvent =
-  | { type: 'UPDATE'; delta?: number; directionX?: number }
-  | { type: 'WALK' }
-  | { type: 'RUN' }
-  | { type: 'JUMP' }
-  | { type: 'FALL' }
-  | { type: 'TOUCH_GROUND' }
-  | { type: 'STOP' };
+  | { type: EventType.UPDATE; delta?: number; directionX?: number }
+  | { type: EventType.WALK }
+  | { type: EventType.RUN }
+  | { type: EventType.JUMP }
+  | { type: EventType.FALL }
+  | { type: EventType.TOUCH_GROUND }
+  | { type: EventType.STOP };

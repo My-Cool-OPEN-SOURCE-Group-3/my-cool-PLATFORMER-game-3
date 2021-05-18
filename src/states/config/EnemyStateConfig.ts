@@ -1,11 +1,12 @@
 import { KinematicCharacterContext } from '../../interfaces/KinematicCharacter';
+import { EventType } from './States';
 
 export interface EnemyContext extends KinematicCharacterContext {}
 
 export type EnemyEvent =
-  | { type: 'UPDATE'; delta?: number; directionX?: number }
-  | { type: 'ROAM' }
-  | { type: 'FALL' }
-  | { type: 'TOUCH_GROUND' }
-  | { type: 'AT_EDGE' }
-  | { type: 'STOP' };
+  | { type: EventType.UPDATE; delta?: number; directionX?: number }
+  | { type: EventType.ROAM }
+  | { type: EventType.AT_EDGE }
+  | { type: EventType.FALL }
+  | { type: EventType.TOUCH_GROUND }
+  | { type: EventType.STOP };
