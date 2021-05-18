@@ -90,11 +90,6 @@ export class Player
       });
     }
 
-    // handle moving in midair because doing this in the state machine sucks
-    if (this.currentState.value !== CharacterState.WALLJUMPING) {
-      this.body.setVelocityX(this.move.speed * dirX);
-    }
-
     // handle falling
     if (
       this.body.velocity.y > 0 &&

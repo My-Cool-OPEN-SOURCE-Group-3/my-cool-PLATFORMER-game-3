@@ -146,9 +146,12 @@ export const PlayerStates = (move: Movement) =>
       actions: {
         update: assign<PlayerContext, PlayerEvent>({
           delta: (_, ev) => (ev.type === EventType.UPDATE ? ev.delta ?? 0 : 0),
-          move: (ctx, ev) => {
+          move: (ctx, ev, meta) => {
             ctx.move.directionX =
               ev.type === EventType.UPDATE ? ev.directionX ?? 0 : 0;
+            if (meta.state?.value !== CharacterState.WALLJUMPING) {
+              ctx.move.body.setVelocityX(ctx.move.speed * ctx.move.directionX);
+            }
             return ctx.move;
           },
         }),
