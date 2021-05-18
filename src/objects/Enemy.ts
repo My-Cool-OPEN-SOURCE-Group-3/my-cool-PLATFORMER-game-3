@@ -72,12 +72,12 @@ export class Enemy
       })
     ) {
       this.interpreter.send({
-        type: 'AT_EDGE',
+        type: EventType.AT_EDGE,
       });
     }
     if (
       this.body.velocity.y > 0 &&
-      this.interpreter.state.value !== 'jumping'
+      this.interpreter.state.value !== CharacterState.JUMPING
     ) {
       // handle falling
       this.interpreter.send({
