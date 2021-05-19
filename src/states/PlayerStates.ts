@@ -106,6 +106,10 @@ export const PlayerStates = (move: Movement) =>
               actions: [Actions.WALLJUMP],
               cond: 'crestedY',
             },
+            TOUCH_GROUND: {
+              target: CharacterState.IDLE,
+              actions: [Actions.LAND],
+            },
             TOUCH_WALL: {
               target: CharacterState.WALLSLIDING,
               cond: 'movingX',
