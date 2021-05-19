@@ -45,6 +45,15 @@ export class Player
       frameRate: 8,
     });
     sceneAnims.create({
+      key: CharacterState.JUMPING,
+      frames: sceneAnims.generateFrameNames('a-player', {
+        prefix: 'run_',
+        start: 2,
+        end: 3,
+      }),
+      frameRate: 1,
+    });
+    sceneAnims.create({
       key: CharacterState.WALKING,
       frames: sceneAnims.generateFrameNames('a-player', {
         prefix: 'run_',

@@ -36,11 +36,9 @@ export const PlayerStates = (move: Movement) =>
           on: {
             WALK: {
               target: CharacterState.WALKING,
-              actions: [Actions.WALK],
             },
             RUN: {
               target: CharacterState.RUNNING,
-              actions: [Actions.RUN],
             },
             JUMP: {
               target: CharacterState.JUMPING,
@@ -48,12 +46,12 @@ export const PlayerStates = (move: Movement) =>
             },
             FALL: {
               target: CharacterState.FALLING,
-              actions: [Actions.FALL],
               cond: 'midair',
             },
           },
         },
         walking: {
+          entry: [Actions.WALK],
           on: {
             STOP: {
               target: CharacterState.IDLE,
@@ -64,16 +62,15 @@ export const PlayerStates = (move: Movement) =>
             },
             RUN: {
               target: CharacterState.RUNNING,
-              actions: [Actions.RUN],
             },
             FALL: {
               target: CharacterState.FALLING,
-              actions: [Actions.FALL],
               cond: 'midair',
             },
           },
         },
         running: {
+          entry: [Actions.RUN],
           on: {
             STOP: {
               target: CharacterState.IDLE,
@@ -84,11 +81,9 @@ export const PlayerStates = (move: Movement) =>
             },
             WALK: {
               target: CharacterState.WALKING,
-              actions: [Actions.WALK],
             },
             FALL: {
               target: CharacterState.FALLING,
-              actions: [Actions.FALL],
               cond: 'midair',
             },
           },
@@ -106,6 +101,7 @@ export const PlayerStates = (move: Movement) =>
           },
         },
         falling: {
+          entry: [Actions.FALL],
           on: {
             TOUCH_GROUND: {
               target: CharacterState.IDLE,
@@ -117,7 +113,6 @@ export const PlayerStates = (move: Movement) =>
             },
             JUMP: {
               target: CharacterState.JUMPING,
-              actions: [Actions.JUMP],
               cond: 'canJump',
             },
           },
@@ -166,6 +161,7 @@ export const PlayerStates = (move: Movement) =>
       guards: {
         canJump: (ctx, _) => ctx.move.midairTime < ctx.move.coyoteTime,
         midair: (ctx, _ev, meta) =>
+          meta.state.value === CharacterState.WALLJUMPING ||
           meta.state.value === CharacterState.JUMPING ||
           meta.state.value === CharacterState.FALLING ||
           ctx.move.body.velocity.y > 0,
@@ -181,7 +177,10 @@ export const PlayerStates = (move: Movement) =>
           move: (ctx, ev, meta) => {
             ctx.move.directionX =
               ev.type === EventType.UPDATE ? ev.directionX ?? 0 : 0;
-            if (meta.state?.value !== CharacterState.WALLJUMPING) {
+            if (
+              meta.state?.value !== CharacterState.WALLJUMPING &&
+              ctx.move.directionX !== 0
+            ) {
               ctx.move.body.setVelocityX(ctx.move.speed * ctx.move.directionX);
             }
             return ctx.move;
@@ -194,7 +193,7 @@ export const PlayerStates = (move: Movement) =>
           },
         }),
         run: assign<PlayerContext, PlayerEvent>({
-          move: (ctx, ev) => {
+          move: (ctx, _) => {
             ctx.move.speed = ctx.move.runSpeed;
             return ctx.move;
           },
@@ -215,7 +214,6 @@ export const PlayerStates = (move: Movement) =>
         }),
         fall: assign<PlayerContext, PlayerEvent>({
           move: (ctx, _) => {
-            ctx.move.body.setVelocityX(ctx.move.speed * ctx.move.directionX);
             ctx.move.midairTime += ctx.delta;
             return ctx.move;
           },
@@ -224,16 +222,15 @@ export const PlayerStates = (move: Movement) =>
           move: (ctx, _) => {
             let mov = ctx.move;
             let vy = mov.body.velocity.y;
+            mov.lastWallDirection = mov.directionX;
             mov.body.setVelocityY(vy * 0.01);
             return ctx.move;
           },
         }),
         walljump: assign<PlayerContext, PlayerEvent>({
           move: (ctx, _) => {
-            console.log('walljumping');
-
             ctx.move.body.setVelocityX(
-              (ctx.move.jumpForce / 4) * -ctx.move.directionX
+              (ctx.move.jumpForce / 4) * -ctx.move.lastWallDirection
             );
             ctx.move.body.setVelocityY(-ctx.move.jumpForce * 0.9);
             return ctx.move;
@@ -246,7 +243,6 @@ export const PlayerStates = (move: Movement) =>
             mov.body.setVelocityX(
               Math.abs(vx) > 0.01 ? vx / (1 + 1 / (ctx.delta * mov.slip)) : 0
             );
-            if (mov.isTouchingWall) mov.body.setVelocityX(0);
             return ctx.move;
           },
         }),
@@ -259,8 +255,6 @@ export const PlayerStates = (move: Movement) =>
                 ? vx / (1 + ctx.delta * (1 / mov.airMomentum))
                 : 0
             );
-            // TODO: see if below line is ever needed
-            // if (mov.isTouchingWall) mov.body.setVelocityX(0);
             return ctx.move;
           },
         }),

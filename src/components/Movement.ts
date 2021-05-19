@@ -19,7 +19,7 @@ export class Movement {
 
   speed = 0;
   midairTime = 0;
-  isTouchingWall = false;
+  lastWallDirection = 0;
 
   constructor(body: Phaser.Physics.Arcade.Body, init?: Partial<Movement>) {
     this.body = body;
