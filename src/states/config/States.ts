@@ -12,8 +12,8 @@ export enum EventType {
 }
 
 export enum CharacterState {
-  IDLE = 'idle',
   ROAMING = 'roaming',
+  IDLE = 'idle',
   WALKING = 'walking',
   RUNNING = 'running',
   JUMPING = 'jumping',

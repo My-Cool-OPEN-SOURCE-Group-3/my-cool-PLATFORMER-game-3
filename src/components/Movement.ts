@@ -4,6 +4,7 @@ export enum Direction {
   LEFT = -1,
   RIGHT = 1,
 }
+
 export class Movement {
   static OVERLAP_TIME_THRESHOLD = 100;
 
@@ -14,6 +15,8 @@ export class Movement {
   airMomentum = 200;
   jumpForce = 900;
   coyoteTime = 100; // extra time in ms after leaving an edge to make a jump
+
+  walkSpeed = this.speed * 0.15; // temp walk speed
 
   isTouchingWall = false;
 

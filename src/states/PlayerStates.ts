@@ -38,6 +38,10 @@ export const PlayerStates = (move: Movement) =>
               target: CharacterState.WALKING,
               actions: [Actions.WALK],
             },
+            RUN: {
+              target: CharacterState.RUNNING,
+              actions: [Actions.RUN],
+            },
             JUMP: {
               target: CharacterState.JUMPING,
               actions: [Actions.JUMP],
@@ -50,6 +54,26 @@ export const PlayerStates = (move: Movement) =>
           },
         },
         walking: {
+          on: {
+            STOP: {
+              target: CharacterState.IDLE,
+            },
+            JUMP: {
+              target: CharacterState.JUMPING,
+              actions: [Actions.JUMP],
+            },
+            RUN: {
+              target: CharacterState.RUNNING,
+              actions: [Actions.RUN],
+            },
+            FALL: {
+              target: CharacterState.FALLING,
+              actions: [Actions.FALL],
+              cond: 'midair',
+            },
+          },
+        },
+        running: {
           on: {
             STOP: {
               target: CharacterState.IDLE,
@@ -164,7 +188,29 @@ export const PlayerStates = (move: Movement) =>
             if (ev.type !== EventType.WALK) {
               return ctx.move;
             }
+            /** this works, but would require resetting on everything, i.e.
+             *  every other condition would require a reset. also jumping gets messed up
+             *  way too inefficient */
+            // ctx.move.body.setMaxSpeed(ctx.move.walkSpeed);
+
+            /** this doesnt do anything? */
+            ctx.move.body.setVelocityX(ctx.move.walkSpeed * ctx.move.directionX);
+            console.log('walk velocity', ctx.move.body.velocity.x);
+
+            // ctx.move.body.setVelocityX(ctx.move.speed * ctx.move.directionX);
+            return ctx.move;
+          },
+        }),
+        run: assign<PlayerContext, PlayerEvent>({
+          move: (ctx, ev) => {
+            console.log(ev.type);
+            if (ev.type !== EventType.RUN) {
+              return ctx.move;
+            }
+            // ctx.move.body.setMaxSpeed(ctx.move.speed);
             ctx.move.body.setVelocityX(ctx.move.speed * ctx.move.directionX);
+            console.log('run velocity', ctx.move.body.velocity.x);
+
             return ctx.move;
           },
         }),
