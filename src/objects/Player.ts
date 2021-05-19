@@ -25,7 +25,7 @@ export class Player
       airMomentum: 200,
       jumpForce: 900,
     });
-    console.log(this.move)
+
     this.states = PlayerStates(this.move);
     this.currentState = this.states.initialState;
     scene.add.existing(this);
@@ -66,31 +66,14 @@ export class Player
   update(_: number, delta: number): void {
     // handle animation
     this.move.updateFlip(this);
-    // let anim = CharacterState.IDLE;
     let anim = <CharacterState>this.currentState.value;
-    // console.log(this.currentState.value, typeof this.currentState.value);
-
-    // // // set animation to use
-    // switch (this.currentState.value) {
-    //   case CharacterState.WALKING:
-    //     anim = CharacterState.WALKING;
-    //     break;
-    //   case CharacterState.RUNNING:
-    //     anim = CharacterState.RUNNING;
-    //     break;
-    //   default:
-    //     // console.log('anim default');
-    //     anim = CharacterState.IDLE;
-    // }
-
     if (anim !== this.lastAnim || !this.anims.isPlaying) {
       this.anims.play(anim);
     }
     this.lastAnim = anim;
 
-    let shouldWalk = this.keys.shift.isDown;
-
     // handle moving
+    let shouldWalk = this.keys.shift.isDown;
     let dirX = 0;
     if (this.keys.left.isDown) {
       dirX += Direction.LEFT;

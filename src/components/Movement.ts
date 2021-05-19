@@ -10,17 +10,16 @@ export class Movement {
 
   body: Phaser.Physics.Arcade.Body;
   directionX = Direction.RIGHT;
-  speed = 300;
+  runSpeed = 300;
+  walkSpeed = this.runSpeed * 0.35;
   slip = 0.1;
   airMomentum = 200;
   jumpForce = 900;
   coyoteTime = 100; // extra time in ms after leaving an edge to make a jump
 
-  walkSpeed = this.speed * 0.15; // temp walk speed
-
-  isTouchingWall = false;
-
+  speed = 0;
   midairTime = 0;
+  isTouchingWall = false;
 
   constructor(body: Phaser.Physics.Arcade.Body, init?: Partial<Movement>) {
     this.body = body;

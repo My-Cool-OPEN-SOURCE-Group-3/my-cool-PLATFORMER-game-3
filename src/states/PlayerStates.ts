@@ -154,6 +154,10 @@ export const PlayerStates = (move: Movement) =>
               target: CharacterState.JUMPING,
               cond: 'crestedY',
             },
+            RUN: {
+              target: CharacterState.JUMPING,
+              cond: 'crestedY',
+            },
           },
         },
       },
@@ -184,33 +188,14 @@ export const PlayerStates = (move: Movement) =>
           },
         }),
         walk: assign<PlayerContext, PlayerEvent>({
-          move: (ctx, ev) => {
-            if (ev.type !== EventType.WALK) {
-              return ctx.move;
-            }
-            /** this works, but would require resetting on everything, i.e.
-             *  every other condition would require a reset. also jumping gets messed up
-             *  way too inefficient */
-            // ctx.move.body.setMaxSpeed(ctx.move.walkSpeed);
-
-            /** this doesnt do anything? */
-            ctx.move.body.setVelocityX(ctx.move.walkSpeed * ctx.move.directionX);
-            console.log('walk velocity', ctx.move.body.velocity.x);
-
-            // ctx.move.body.setVelocityX(ctx.move.speed * ctx.move.directionX);
+          move: (ctx, _) => {
+            ctx.move.speed = ctx.move.walkSpeed;
             return ctx.move;
           },
         }),
         run: assign<PlayerContext, PlayerEvent>({
           move: (ctx, ev) => {
-            console.log(ev.type);
-            if (ev.type !== EventType.RUN) {
-              return ctx.move;
-            }
-            // ctx.move.body.setMaxSpeed(ctx.move.speed);
-            ctx.move.body.setVelocityX(ctx.move.speed * ctx.move.directionX);
-            console.log('run velocity', ctx.move.body.velocity.x);
-
+            ctx.move.speed = ctx.move.runSpeed;
             return ctx.move;
           },
         }),
